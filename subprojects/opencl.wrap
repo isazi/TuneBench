@@ -1,0 +1,4 @@
+[wrap-git]
+directory = OpenCL
+url = https://github.com/isazi/OpenCL
+revision = 5620fa9c687aa82bd9f733e435ac24fc6c1ca600
