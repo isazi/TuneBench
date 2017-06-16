@@ -1,3 +1,5 @@
+"""
+"""
 
 # Templates
 TEMPLATE_OPENCL = """__kernel void(__global const <%VECTOR_DATA%> * const restrict A, __global const <%VECTOR_DATA%> * const restrict B, __global <%VECTOR_DATA%> * const restrict C) {
