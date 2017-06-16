@@ -21,9 +21,10 @@ import config
 import management
 import tuning
 import statistical_analysis
+import difficulty
 
 if len(sys.argv) == 1:
-    print("Supported commmands are: create, delete, load, list_tables, list_values, tune, quartiles, histogram, tuning_variability")
+    print("Supported commmands are: create, delete, load, list_tables, list_values, tune, quartiles, histogram, tuning_variability, difficulty_score")
     print("Type \"" + sys.argv[0] + " <command>\" for specific help.")
     sys.exit(1)
 
@@ -116,12 +117,18 @@ elif COMMAND == "histogram":
             print(item, RESULTS[item])
 elif COMMAND == "tuning_variability":
     if len(sys.argv) != 5:
-        print("Usage: \"" + sys.argv[0] + " tune \"<tables>\" <benchmark> \"<scenarios>\"\"")
+        print("Usage: \"" + sys.argv[0] + " tuning_variability \"<tables>\" <benchmark> \"<scenarios>\"\"")
         print("Returns the coefficient of variability of each parameter of the optimal configuration.")
     else:
         TABLES = sys.argv[2].split()
         SCENARIOS = sys.argv[4].split()
         management.print_tuples(statistical_analysis.get_tuning_variability(DB_QUEUE, TABLES, sys.argv[3], SCENARIOS))
+elif COMMAND == "difficulty_score":
+    if len(sys.argv) != 5:
+        print("Usage: \"" + sys.argv[0] + " difficulty_score <table> <benchmark> <scenario>\"")
+        print("Returns the difficulty score of the table, for a given scenario.")
+    else:
+        management.print_tuples(difficulty.difficulty(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4]))
 else:
     print("Unknown command.")
     print("Type \"" + sys.argv[0]  + "\" for a list of supported commands.")
