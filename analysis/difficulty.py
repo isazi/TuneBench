@@ -30,9 +30,12 @@ def difficulty(db_queue, table, benchmark, scenario):
     db_queue.execute("SELECT COUNT(id),MAX(" + metrics.rstrip(",") + ") FROM " + table + " WHERE " + scenario)
     results = db_queue.fetchall()
     total_confs = results[0][0] - 1
-    threshold = int(results[0][1]) - ((5 * int(results[0][1])) / 100)
+    threshold = results[0][1] - ((10 * results[0][1]) / 100)
     db_queue.execute("SELECT COUNT(id) FROM " + table + " WHERE (" + scenario + " AND " + metrics.rstrip(",") + " >= " + str(threshold) + ")")
     results = db_queue.fetchall()
     good_confs = results[0][0] - 1
-    score = 100 / ((good_confs * 100) / total_confs)
+    if good_confs >= 1:
+        score = 100 - ((good_confs * 100) / total_confs)
+    else:
+        score = 100
     return [score]
