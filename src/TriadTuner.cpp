@@ -112,7 +112,8 @@ int main(int argc, char * argv[]) {
   for ( auto configuration = configurations.begin(); configuration != configurations.end(); ++configuration ) {
     if ( samplingFactor < 100 ) {
       // Sample the configurations
-      std::default_random_engine randomEngine;
+      std::random_device randomDevice;
+      std::default_random_engine randomEngine(randomDevice);
       std::uniform_int_distribution<unsigned int> uniformDistribution(0, 99);
       unsigned int randomValue = uniformDistribution(randomEngine);
 
