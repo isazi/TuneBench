@@ -118,7 +118,7 @@ int main(int argc, char * argv[]) {
       unsigned int randomValue = uniformDistribution(randomEngine);
 
       if ( randomValue >= samplingFactor ) {
-        break;
+        continue;
       }
     }
     // Generate kernel
