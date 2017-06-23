@@ -113,7 +113,7 @@ int main(int argc, char * argv[]) {
     if ( samplingFactor < 100 ) {
       // Sample the configurations
       std::random_device randomDevice;
-      std::default_random_engine randomEngine(randomDevice);
+      std::default_random_engine randomEngine(randomDevice());
       std::uniform_int_distribution<unsigned int> uniformDistribution(0, 99);
       unsigned int randomValue = uniformDistribution(randomEngine);
 
