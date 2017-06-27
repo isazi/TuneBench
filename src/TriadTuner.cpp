@@ -17,7 +17,6 @@
 #include <exception>
 #include <algorithm>
 #include <iomanip>
-#include <ctime>
 #include <random>
 
 #include <configuration.hpp>
@@ -44,6 +43,10 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int maxVector = 0;
   unsigned int inputSize = 0;
+  // Random number generation
+  std::random_device randomDevice;
+  std::default_random_engine randomEngine(randomDevice());
+  std::uniform_int_distribution<unsigned int> uniformDistribution(0, factor);
 
   try {
     isa::utils::ArgumentList args(argc, argv);
@@ -76,11 +79,8 @@ int main(int argc, char * argv[]) {
   std::vector< inputDataType > A(inputSize), B(inputSize), C(inputSize), C_control(inputSize);
   cl::Buffer A_d, B_d, C_d;
 
-  srand(time(0));
-  for ( unsigned int item = 0; item < A.size(); item++ ) {
-    A[item] = rand() % factor;
-    B[item] = rand() % factor;
-  }
+  std::generate(A.begin(), A.end(), uniformDistribution(randomEngine));
+  std::generate(B.begin(), B.end(), uniformDistribution(randomEngine));
   std::fill(C.begin(), C.end(), factor);
   std::fill(C_control.begin(), C_control.end(), factor);
 
@@ -105,22 +105,16 @@ int main(int argc, char * argv[]) {
       }
     }
   }
+  if ( samplingFactor < 100 ) {
+    unsigned int newSize = static_cast<unsigned int>((configurations.size() * samplingFactor) / 100.0);
+    std::shuffle(configurations.begin(), configurations.end(), randomEngine);
+    configuration.resize(newSize);
+  }
 
   std::cout << std::fixed << std::endl;
   std::cout << "# inputSize *configuration* GB/s time stdDeviation COV" << std::endl << std::endl;
 
   for ( auto configuration = configurations.begin(); configuration != configurations.end(); ++configuration ) {
-    if ( samplingFactor < 100 ) {
-      // Sample the configurations
-      std::random_device randomDevice;
-      std::default_random_engine randomEngine(randomDevice());
-      std::uniform_int_distribution<unsigned int> uniformDistribution(0, 99);
-      unsigned int randomValue = uniformDistribution(randomEngine);
-
-      if ( randomValue >= samplingFactor ) {
-        continue;
-      }
-    }
     // Generate kernel
     double gbytes = isa::utils::giga(static_cast< uint64_t >(inputSize) * sizeof(inputDataType) * 3.0);
     cl::Event clEvent;
