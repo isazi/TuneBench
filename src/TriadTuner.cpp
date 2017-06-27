@@ -79,8 +79,8 @@ int main(int argc, char * argv[]) {
   std::vector< inputDataType > A(inputSize), B(inputSize), C(inputSize), C_control(inputSize);
   cl::Buffer A_d, B_d, C_d;
 
-  std::generate(A.begin(), A.end(), uniformDistribution(randomEngine));
-  std::generate(B.begin(), B.end(), uniformDistribution(randomEngine));
+  std::generate(A.begin(), A.end(), [](){ return uniformDistribution(randomEngine); });
+  std::generate(B.begin(), B.end(), [](){ return uniformDistribution(randomEngine); });
   std::fill(C.begin(), C.end(), factor);
   std::fill(C_control.begin(), C_control.end(), factor);
 
