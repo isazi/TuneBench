@@ -108,7 +108,7 @@ int main(int argc, char * argv[]) {
   if ( samplingFactor < 100 ) {
     unsigned int newSize = static_cast<unsigned int>((configurations.size() * samplingFactor) / 100.0);
     std::shuffle(configurations.begin(), configurations.end(), randomEngine);
-    configuration.resize(newSize);
+    configurations.resize(newSize);
   }
 
   std::cout << std::fixed << std::endl;
