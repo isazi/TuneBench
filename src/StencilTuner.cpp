@@ -157,7 +157,7 @@ int main(int argc, char * argv[]) {
     }
     delete code;
 
-    cl::NDRange global(matrixWidth / (configuration).getNrItemsD0(), matrixWidth / (*configuration).getNrItemsD1());
+    cl::NDRange global(matrixWidth / (*configuration).getNrItemsD0(), matrixWidth / (*configuration).getNrItemsD1());
     cl::NDRange local((*configuration).getNrThreadsD0(), (*configuration).getNrThreadsD1());
 
     kernel->setArg(0, input_d);
