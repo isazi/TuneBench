@@ -63,7 +63,7 @@ int main(int argc, char * argv[]) {
     maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     matrixWidth = args.getSwitchArgument< unsigned int >("-matrix_width");
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr << argv[0] << " -opencl_platform ... -opencl_device ... [-sampling -factor ...] -iterations ... -vector ... -padding ... -max_threads ... -max_items ... -matrix_width ... [-local]" << std::endl;
+    std::cerr << argv[0] << " -opencl_platform ... -opencl_device ... [-sampling -factor ...] -iterations ... -vector ... -padding ... -max_threads ... -max_items ... -matrix_width ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
