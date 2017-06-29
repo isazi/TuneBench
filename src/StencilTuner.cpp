@@ -62,7 +62,6 @@ int main(int argc, char * argv[]) {
     maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
     maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     matrixWidth = args.getSwitchArgument< unsigned int >("-matrix_width");
-    conf.setLocalMemory(args.getSwitch("-local"));
   } catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr << argv[0] << " -opencl_platform ... -opencl_device ... [-sampling -factor ...] -iterations ... -vector ... -padding ... -max_threads ... -max_items ... -matrix_width ... [-local]" << std::endl;
     return 1;
@@ -108,12 +107,15 @@ int main(int argc, char * argv[]) {
           if ( matrixWidth % (threadsD1 * itemsD1) != 0 ) {
             continue;
           }
-          TuneBench::Stencil2DConf configuration;
-          configuration.setNrThreadsD0(threadsD0);
-          configuration.setNrThreadsD1(threadsD1);
-          configuration.setNrItemsD0(itemsD0);
-          configuration.setNrItemsD1(itemsD1);
-          configurations.push_back(configuration);
+          for ( unsigned int local = 0; local < 2; local++ ) {
+            TuneBench::Stencil2DConf configuration;
+            configuration.setLocalMemory(static_cast<bool>(local));
+            configuration.setNrThreadsD0(threadsD0);
+            configuration.setNrThreadsD1(threadsD1);
+            configuration.setNrItemsD0(itemsD0);
+            configuration.setNrItemsD1(itemsD1);
+            configurations.push_back(configuration);
+          }
         }
       }
     }
@@ -155,8 +157,8 @@ int main(int argc, char * argv[]) {
     }
     delete code;
 
-    cl::NDRange global(matrixWidth / *configuration.getNrItemsD0(), matrixWidth / *configuration.getNrItemsD1());
-    cl::NDRange local(*configuration.getNrThreadsD0(), *configuration.getNrThreadsD1());
+    cl::NDRange global(matrixWidth / (configuration).getNrItemsD0(), matrixWidth / (*configuration).getNrItemsD1());
+    cl::NDRange local((*configuration).getNrThreadsD0(), (*configuration).getNrThreadsD1());
 
     kernel->setArg(0, input_d);
     kernel->setArg(1, output_d);
@@ -178,7 +180,7 @@ int main(int argc, char * argv[]) {
     } catch ( cl::Error & err ) {
       reInit = true;
       std::cerr << "OpenCL kernel execution error (";
-      std::cerr << *configuration.print();
+      std::cerr << (*configuration).print();
       std::cerr << "): ";
       std::cerr << isa::utils::toString(err.err()) << std::endl;
       delete kernel;
@@ -193,7 +195,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int y = 0; y < matrixWidth; y++ ) {
       for ( unsigned int x = 0; x < matrixWidth; x++ ) {
         if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x]) ) {
-          std::cerr << "Output error (" << *configuration.print() << ")." << std::endl;
+          std::cerr << "Output error (" << (*configuration).print() << ")." << std::endl;
           error = true;
           break;
         }
@@ -207,7 +209,7 @@ int main(int argc, char * argv[]) {
     }
 
     std::cout << matrixWidth << " ";
-    std::cout << *configuration.print() << " ";
+    std::cout << (*configuration).print() << " ";
     std::cout << std::setprecision(3);
     std::cout << gflops / timer.getAverageTime() << " ";
     std::cout << std::setprecision(6);
