@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
       delete code;
-      break;
+      continue;
     }
     delete code;
 
