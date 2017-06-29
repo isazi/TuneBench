@@ -96,7 +96,7 @@ int main(int argc, char * argv[]) {
   TuneBench::stencil2D(input, output_c, matrixWidth, padding);
 
   // Generate tuning configurations
-  std::vector<TuneBench::StencilConf> configurations;
+  std::vector<TuneBench::Stencil2DConf> configurations;
   for ( unsigned int threadsD0 = vectorSize; threadsD0 <= maxThreads; threadsD0 += vectorSize) {
     for ( unsigned int threadsD1 = 1; threadsD0 * threadsD1 <= maxThreads; threadsD1++ ) {
       for ( unsigned int itemsD0 = 1; itemsD0 <= maxItems; itemsD0++ ) {
