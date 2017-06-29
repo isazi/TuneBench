@@ -107,7 +107,7 @@ int main(int argc, char * argv[]) {
           if ( matrixWidth % (threadsD1 * itemsD1) != 0 ) {
             continue;
           }
-          TuneBench::StencilConf configuration;
+          TuneBench::Stencil2DConf configuration;
           configuration.setNrThreadsD0(threadsD0);
           configuration.setNrThreadsD1(threadsD1);
           configuration.setNrItemsD0(itemsD0);
