@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
   // Random number generation
   std::random_device randomDevice;
   std::default_random_engine randomEngine(randomDevice());
-  std::uniform_int_distribution<unsigned int> uniformDistribution(0, magicValue);
+  std::uniform_int_distribution<inputDataType> uniformDistribution(0, magicValue);
 
   try {
     isa::utils::ArgumentList args(argc, argv);
@@ -76,7 +76,7 @@ int main(int argc, char * argv[]) {
   std::vector< std::vector< cl::CommandQueue > > * clQueues = 0;
 
   // Allocate host memory
-  std::vector< inputDataType > input((matrixWidth + 2) * isa::utils::pad(matrixWidth + 2, padding)), output(matrixWidth * isa::utils::pad(matrixWidth, padding)), output_c;
+  std::vector<inputDataType> input((matrixWidth + 2) * isa::utils::pad(matrixWidth + 2, padding)), output(matrixWidth * isa::utils::pad(matrixWidth, padding)), output_c;
   cl::Buffer input_d, output_d;
 
   for ( unsigned int y = 0; y < matrixWidth + 2; y++ ) {
