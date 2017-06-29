@@ -16,7 +16,7 @@
 #include <iostream>
 #include <exception>
 #include <iomanip>
-#include <ctime>
+#include <random>
 
 #include <configuration.hpp>
 
@@ -34,6 +34,7 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
 int main(int argc, char * argv[]) {
   bool reInit = true;
   unsigned int nrIterations = 0;
+  unsigned int samplingFactor = 100;
   unsigned int clPlatformID = 0;
   unsigned int clDeviceID = 0;
   unsigned int vectorSize = 0;
@@ -41,13 +42,19 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int matrixWidth = 0;
   unsigned int padding = 0;
-  TuneBench::Stencil2DConf conf;
+  // Random number generation
+  std::random_device randomDevice;
+  std::default_random_engine randomEngine(randomDevice());
+  std::uniform_int_distribution<unsigned int> uniformDistribution(0, magicValue);
 
   try {
     isa::utils::ArgumentList args(argc, argv);
 
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
+    if ( args.getSwitch("-sampling") ) {
+      samplingFactor = args.getSwitchArgument< unsigned int >("-factor");
+    }
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
     vectorSize = args.getSwitchArgument< unsigned int >("-vector");
     padding = args.getSwitchArgument< unsigned int >("-padding");
@@ -56,7 +63,7 @@ int main(int argc, char * argv[]) {
     matrixWidth = args.getSwitchArgument< unsigned int >("-matrix_width");
     conf.setLocalMemory(args.getSwitch("-local"));
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr << argv[0] << " -opencl_platform ... -opencl_device ... -iterations ... -vector ... -padding ... -max_threads ... -max_items ... -matrix_width ... [-local]" << std::endl;
+    std::cerr << argv[0] << " -opencl_platform ... -opencl_device ... [-sampling -factor ...] -iterations ... -vector ... -padding ... -max_threads ... -max_items ... -matrix_width ... [-local]" << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
@@ -72,7 +79,6 @@ int main(int argc, char * argv[]) {
   std::vector< inputDataType > input((matrixWidth + 2) * isa::utils::pad(matrixWidth + 2, padding)), output(matrixWidth * isa::utils::pad(matrixWidth, padding)), output_c;
   cl::Buffer input_d, output_d;
 
-  srand(time(0));
   for ( unsigned int y = 0; y < matrixWidth + 2; y++ ) {
     for ( unsigned int x = 0; x < matrixWidth + 2; x++ ) {
       if ( y == 0 || y == (matrixWidth - 1) ) {
@@ -80,118 +86,131 @@ int main(int argc, char * argv[]) {
       } else if ( x == 0 || x == (matrixWidth - 1) ) {
         input[(y * isa::utils::pad(matrixWidth + 2, padding)) + x] = 0;
       } else {
-        input[(y * isa::utils::pad(matrixWidth + 2, padding)) + x] = std::rand() % static_cast< unsigned int >(magicValue);
+        input[(y * isa::utils::pad(matrixWidth + 2, padding)) + x] = uniformDistribution(randomEngine);
       }
     }
   }
   output_c.resize(output.size());
+
+  // Run the control
   TuneBench::stencil2D(input, output_c, matrixWidth, padding);
+
+  // Generate tuning configurations
+  std::vector<TuneBench::StencilConf> configurations;
+  for ( unsigned int threadsD0 = vectorSize; threadsD0 <= maxThreads; threadsD0 += vectorSize) {
+    for ( unsigned int threadsD1 = 1; threadsD0 * threadsD1 <= maxThreads; threadsD1++ ) {
+      for ( unsigned int itemsD0 = 1; itemsD0 <= maxItems; itemsD0++ ) {
+        if ( matrixWidth % (threadsD0 * itemsD0) != 0 ) {
+          continue;
+        }
+        for ( unsigned int itemsD1 = 1; itemsD0 * itemsD1 <= maxItems; itemsD1++ ) {
+          if ( matrixWidth % (threadsD1 * itemsD1) != 0 ) {
+            continue;
+          }
+          TuneBench::StencilConf configuration;
+          configuration.setNrThreadsD0(threadsD0);
+          configuration.setNrThreadsD1(threadsD1);
+          configuration.setNrItemsD0(itemsD0);
+          configuration.setNrItemsD1(itemsD1);
+          configurations.push_back(configuration);
+        }
+      }
+    }
+  }
+  if ( samplingFactor < 100 ) {
+    unsigned int newSize = static_cast<unsigned int>((configurations.size() * samplingFactor) / 100.0);
+    std::shuffle(configurations.begin(), configurations.end(), randomEngine);
+    configurations.resize(newSize);
+  }
 
   std::cout << std::fixed << std::endl;
   std::cout << "# matrixWidth *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
-  for ( unsigned int threads = vectorSize; threads <= maxThreads; threads += vectorSize) {
-    conf.setNrThreadsD0(threads);
-    for ( unsigned int threads = 1; conf.getNrThreadsD0() * threads <= maxThreads; threads++ ) {
-      conf.setNrThreadsD1(threads);
-      for ( unsigned int items = 1; items <= maxItems; items++ ) {
-        conf.setNrItemsD0(items);
-        if ( matrixWidth % (conf.getNrThreadsD0() * conf.getNrItemsD0()) != 0 ) {
-          continue;
-        }
-        for ( unsigned int items = 1; conf.getNrItemsD0() * items <= maxItems; items++ ) {
-          conf.setNrItemsD1(items);
-          if ( matrixWidth % (conf.getNrThreadsD1() * conf.getNrItemsD1()) != 0 ) {
-            continue;
-          }
+  for ( auto configuration = configurations.begin(); configuration != configurations.end(); ++configuration ) {
+    // Generate kernel
+    double gflops = isa::utils::giga(static_cast< uint64_t >(matrixWidth) * matrixWidth * 18.0);
+    cl::Event clEvent;
+    cl::Kernel * kernel;
+    isa::utils::Timer timer;
+    std::string * code = TuneBench::getStencil2DOpenCL(*configuration, inputDataName, matrixWidth, padding);
 
-          // Generate kernel
-          double gflops = isa::utils::giga(static_cast< uint64_t >(matrixWidth) * matrixWidth * 18.0);
-          cl::Event clEvent;
-          cl::Kernel * kernel;
-          isa::utils::Timer timer;
-          std::string * code = TuneBench::getStencil2DOpenCL(conf, inputDataName, matrixWidth, padding);
+    if ( reInit ) {
+      delete clQueues;
+      clQueues = new std::vector< std::vector< cl::CommandQueue > >();
+      isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+      try {
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input, &input_d, &output_d, output.size());
+      } catch ( cl::Error & err ) {
+        return -1;
+      }
+      reInit = false;
+    }
+    try {
+      kernel = isa::OpenCL::compile("stencil2D", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+    } catch ( isa::OpenCL::OpenCLError & err ) {
+      std::cerr << err.what() << std::endl;
+      delete code;
+      break;
+    }
+    delete code;
 
-          if ( reInit ) {
-            delete clQueues;
-            clQueues = new std::vector< std::vector< cl::CommandQueue > >();
-            isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
-            try {
-              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &input, &input_d, &output_d, output.size());
-            } catch ( cl::Error & err ) {
-              return -1;
-            }
-            reInit = false;
-          }
-          try {
-            kernel = isa::OpenCL::compile("stencil2D", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-          } catch ( isa::OpenCL::OpenCLError & err ) {
-            std::cerr << err.what() << std::endl;
-            delete code;
-            break;
-          }
-          delete code;
+    cl::NDRange global(matrixWidth / *configuration.getNrItemsD0(), matrixWidth / *configuration.getNrItemsD1());
+    cl::NDRange local(*configuration.getNrThreadsD0(), *configuration.getNrThreadsD1());
 
-          cl::NDRange global(matrixWidth / conf.getNrItemsD0(), matrixWidth / conf.getNrItemsD1());
-          cl::NDRange local(conf.getNrThreadsD0(), conf.getNrThreadsD1());
+    kernel->setArg(0, input_d);
+    kernel->setArg(1, output_d);
 
-          kernel->setArg(0, input_d);
-          kernel->setArg(1, output_d);
+    try {
+      // Warm-up run
+      clQueues->at(clDeviceID)[0].finish();
+      clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &clEvent);
+      clEvent.wait();
+      // Tuning runs
+      for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
+        timer.start();
+        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &clEvent);
+        clEvent.wait();
+        timer.stop();
+      }
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(inputDataType), reinterpret_cast< void * >(output.data()), 0, &clEvent);
+      clEvent.wait();
+    } catch ( cl::Error & err ) {
+      reInit = true;
+      std::cerr << "OpenCL kernel execution error (";
+      std::cerr << *configuration.print();
+      std::cerr << "): ";
+      std::cerr << isa::utils::toString(err.err()) << std::endl;
+      delete kernel;
+      if ( err.err() == -4 || err.err() == -61 ) {
+        return -1;
+      }
+      break;
+    }
+    delete kernel;
 
-          try {
-            // Warm-up run
-            clQueues->at(clDeviceID)[0].finish();
-            clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &clEvent);
-            clEvent.wait();
-            // Tuning runs
-            for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
-              timer.start();
-              clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &clEvent);
-              clEvent.wait();
-              timer.stop();
-            }
-            clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(inputDataType), reinterpret_cast< void * >(output.data()), 0, &clEvent);
-            clEvent.wait();
-          } catch ( cl::Error & err ) {
-            reInit = true;
-            std::cerr << "OpenCL kernel execution error (";
-            std::cerr << conf.print();
-            std::cerr << "): ";
-            std::cerr << isa::utils::toString(err.err()) << std::endl;
-            delete kernel;
-            if ( err.err() == -4 || err.err() == -61 ) {
-              return -1;
-            }
-            break;
-          }
-          delete kernel;
-
-          bool error = false;
-          for ( unsigned int y = 0; y < matrixWidth; y++ ) {
-            for ( unsigned int x = 0; x < matrixWidth; x++ ) {
-              if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x]) ) {
-                std::cerr << "Output error (" << conf.print() << ")." << std::endl;
-                error = true;
-                break;
-              }
-            }
-            if ( error ) {
-              break;
-            }
-          }
-          if ( error ) {
-            continue;
-          }
-
-          std::cout << matrixWidth << " ";
-          std::cout << conf.print() << " ";
-          std::cout << std::setprecision(3);
-          std::cout << gflops / timer.getAverageTime() << " ";
-          std::cout << std::setprecision(6);
-          std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " " << timer.getCoefficientOfVariation() << std::endl;
+    bool error = false;
+    for ( unsigned int y = 0; y < matrixWidth; y++ ) {
+      for ( unsigned int x = 0; x < matrixWidth; x++ ) {
+        if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x]) ) {
+          std::cerr << "Output error (" << *configuration.print() << ")." << std::endl;
+          error = true;
+          break;
         }
       }
+      if ( error ) {
+        break;
+      }
     }
+    if ( error ) {
+      continue;
+    }
+
+    std::cout << matrixWidth << " ";
+    std::cout << *configuration.print() << " ";
+    std::cout << std::setprecision(3);
+    std::cout << gflops / timer.getAverageTime() << " ";
+    std::cout << std::setprecision(6);
+    std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " " << timer.getCoefficientOfVariation() << std::endl;
   }
   std::cout << std::endl;
 
