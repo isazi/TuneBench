@@ -17,6 +17,7 @@
 #include <exception>
 #include <iomanip>
 #include <random>
+#include <algorithm>
 
 #include <configuration.hpp>
 
