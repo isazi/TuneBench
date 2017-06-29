@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
   // Random number generation
   std::random_device randomDevice;
   std::default_random_engine randomEngine(randomDevice());
-  std::uniform_int_distribution<inputDataType> uniformDistribution(0, magicValue);
+  std::uniform_real_distribution<inputDataType> uniformDistribution(0, magicValue);
 
   try {
     isa::utils::ArgumentList args(argc, argv);
