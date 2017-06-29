@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
       if ( err.err() == -4 || err.err() == -61 ) {
         return -1;
       }
-      break;
+      continue;
     }
     delete kernel;
 
@@ -197,11 +197,11 @@ int main(int argc, char * argv[]) {
         if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x]) ) {
           std::cerr << "Output error (" << (*configuration).print() << ")." << std::endl;
           error = true;
-          break;
+          continue;
         }
       }
       if ( error ) {
-        break;
+        continue;
       }
     }
     if ( error ) {
