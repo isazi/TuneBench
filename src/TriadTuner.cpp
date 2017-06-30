@@ -43,6 +43,10 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int maxVector = 0;
   unsigned int inputSize = 0;
+  // Best configuration and total time
+  TuneBench::TriadConf bestConfiguration;
+  double bestMetric = 0.0;
+  isa::utils::Timer totalTimer;
   // Random number generation
   std::random_device randomDevice;
   std::default_random_engine randomEngine(randomDevice());
@@ -114,6 +118,7 @@ int main(int argc, char * argv[]) {
   std::cout << std::fixed << std::endl;
   std::cout << "# inputSize *configuration* GB/s time stdDeviation COV" << std::endl << std::endl;
 
+  totalTimer.start();
   for ( auto configuration = configurations.begin(); configuration != configurations.end(); ++configuration ) {
     // Generate kernel
     double gbytes = isa::utils::giga(static_cast< uint64_t >(inputSize) * sizeof(inputDataType) * 3.0);
@@ -190,6 +195,10 @@ int main(int argc, char * argv[]) {
       continue;
     }
 
+    if ( (gbytes / timer.getAverageTime()) > bestMetric ) {
+      bestMetric = gbytes / timer.getAverageTime();
+      bestConfiguration = *configuration;
+    }
     std::cout << inputSize << " ";
     std::cout << (*configuration).print() << " ";
     std::cout << std::setprecision(3);
@@ -197,6 +206,15 @@ int main(int argc, char * argv[]) {
     std::cout << std::setprecision(6);
     std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " " << timer.getCoefficientOfVariation() << std::endl;
   }
+  totalTimer.stop();
+
+  std::cout << std::endl;
+  std::cout << "# ";
+  std::cout << (*bestConfiguration).print() << " ";
+  std::cout << std::setprecision(3);
+  std::cout << bestMetric << " ";
+  std::cout << std::setprecision(6);
+  std::cout << totalTimer.getAverageTime() << std::endl;
   std::cout << std::endl;
 
   return 0;
