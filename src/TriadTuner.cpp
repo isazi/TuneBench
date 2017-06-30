@@ -210,7 +210,7 @@ int main(int argc, char * argv[]) {
 
   std::cout << std::endl;
   std::cout << "# ";
-  std::cout << (*bestConfiguration).print() << " ";
+  std::cout << bestConfiguration.print() << " ";
   std::cout << std::setprecision(3);
   std::cout << bestMetric << " ";
   std::cout << std::setprecision(6);
