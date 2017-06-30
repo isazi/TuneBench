@@ -194,7 +194,7 @@ int main(int argc, char * argv[]) {
     bool error = false;
     for ( unsigned int y = 0; y < matrixWidth; y++ ) {
       for ( unsigned int x = 0; x < matrixWidth; x++ ) {
-        if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x]) ) {
+        if ( !isa::utils::same(output[(y * isa::utils::pad(matrixWidth, padding)) + x], output_c[(y * isa::utils::pad(matrixWidth, padding)) + x], 0.001f) ) {
           std::cerr << "Output error (" << (*configuration).print() << ")." << std::endl;
           error = true;
           break;
