@@ -214,7 +214,7 @@ int main(int argc, char * argv[]) {
     }
 
     if ( (gflops / timer.getAverageTime()) > bestMetric ) {
-      bestMetric = gbytes / timer.getAverageTime();
+      bestMetric = gflops / timer.getAverageTime();
       bestConfiguration = *configuration;
     }
     std::cout << matrixWidth << " ";
