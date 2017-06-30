@@ -175,7 +175,7 @@ int main(int argc, char * argv[]) {
 
     bool error = false;
     for ( unsigned int atom = 0; atom < nrAtoms; atom++ ) {
-      if ( !isa::utils::same(output[(atom * 4)], output_c[(atom * 4)], 0.001) || !isa::utils::same(output[(atom * 4) + 1], output_c[(atom * 4) + 1], 0.001) || !isa::utils::same(output[(atom * 4) + 2], output_c[(atom * 4) + 2], 0.001) ) {
+      if ( !isa::utils::same(output[(atom * 4)], output_c[(atom * 4)], static_cast<inputDataType>(0.001)) || !isa::utils::same(output[(atom * 4) + 1], output_c[(atom * 4) + 1], static_cast<inputDataType>(0.001)) || !isa::utils::same(output[(atom * 4) + 2], output_c[(atom * 4) + 2], static_cast<inputDataType>(0.001)) ) {
         std::cerr << "Output error (" << (*configuration).print() << ")." << std::endl;
         error = true;
         break;
