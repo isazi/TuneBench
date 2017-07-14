@@ -175,11 +175,12 @@ int main(int argc, char * argv[]) {
       std::cerr << isa::utils::toString(inputSize / (*configuration).getNrItemsD0()) << "): ";
       std::cerr << isa::utils::toString(err.err()) << std::endl;
       delete kernel;
-      if ( err.err() == -4 || err.err() == -61 ) {
+      if ( err.err() != -5 && err.err() != -9999 ) {
+        reInit = true;
+      } else if ( err.err() == -4 || err.err() == -61 ) {
         return -1;
       }
-      reInit = true;
-      break;
+      continue;
     }
     delete kernel;
 
