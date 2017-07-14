@@ -165,13 +165,14 @@ int main(int argc, char * argv[]) {
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(output_d, CL_TRUE, 0, output.size() * sizeof(inputDataType), reinterpret_cast< void * >(output.data()), 0, &clEvent);
       clEvent.wait();
     } catch ( cl::Error & err ) {
-      reInit = true;
       std::cerr << "OpenCL kernel execution error (";
       std::cerr << (*configuration).print();
       std::cerr << "): ";
       std::cerr << isa::utils::toString(err.err()) << std::endl;
       delete kernel;
-      if ( err.err() == -4 || err.err() == -61 ) {
+      if ( err.err() != -5 && err.err() != -9999 ) {
+        reInit = true;
+      } else if ( err.err() == -4 || err.err() == -61 ) {
         return -1;
       }
       continue;
