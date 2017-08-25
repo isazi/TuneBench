@@ -21,12 +21,12 @@ TEMPLATE_COMPUTE = """C[item + <%OFFSET%>] = A[item + <%OFFSET%>] + (<%FACTOR%> 
 
 def generate_compute_code(configuration):
     compute_code = str()
-    for item in range(int(configuration["items_dim0"])):
+    for item in range(configuration["items_dim0"]):
         temp = TEMPLATE_COMPUTE
         if item == 0:
             temp = temp.replace(" + <%OFFSET%>", "")
         else:
-            temp = temp.replace("<%OFFSET%>", str(item * int(configuration["threads_dim0"])))
+            temp = temp.replace("<%OFFSET%>", str(item * configuration["threads_dim0"]))
         temp = temp.replace("<%FACTOR%>", str(FACTOR))
         # Format the code
         if item != (configuration["items_dim0"] - 1):
@@ -41,7 +41,7 @@ def generate_code_OpenCL(configuration):
     OpenCL code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_OPENCL.replace("<%VECTOR_DATA%>", configuration["vector_data"])
+    code = TEMPLATE_OPENCL.replace("<%VECTOR_DATA%>", str(configuration["vector_data"]))
     code = code.replace("<%ITEMS_PER_WORKGROUP%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
@@ -53,7 +53,7 @@ def generate_code_CUDA(configuration):
     CUDA code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_CUDA.replace("<%VECTOR_DATA%>", configuration["vector_data"])
+    code = TEMPLATE_CUDA.replace("<%VECTOR_DATA%>", str(configuration["vector_data"]))
     code = code.replace("<%THREADS_PER_BLOCK%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
