@@ -7,13 +7,14 @@ from kernel_tuner import tune_kernel
 
 # Global variables
 FACTOR = 42.0
+DATA_TYPE = "float"
 
 # Code templates
-TEMPLATE_OPENCL = """__kernel void triad(__global const <%VECTOR_DATA%> * const restrict A, __global const <%VECTOR_DATA%> * const restrict B, __global <%VECTOR_DATA%> * const restrict C) {
+TEMPLATE_OPENCL = """__kernel void triad(__global const """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict A, __global const """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict B, __global """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict C) {
 unsigned int item = (get_group_id(0) * <%ITEMS_PER_WORKGROUP%>) + get_local_id(0);
 <%COMPUTE%>
 }\n"""
-TEMPLATE_CUDA = """__global__ void triad(const <%VECTOR_DATA%> * const restrict A, const <%VECTOR_DATA%> * const restrict B, <%VECTOR_DATA%> * const restrict C) {
+TEMPLATE_CUDA = """__global__ void triad(const <%VECTOR_SIZE%> * const restrict A, const <%VECTOR_SIZE%> * const restrict B, <%VECTOR_SIZE%> * const restrict C) {
 unsigned int item = (blockIdx.x * <%THREADS_PER_BLOCK%>) + threadIdx.x;
 <%COMPUTE%>
 }\n"""
@@ -41,7 +42,7 @@ def generate_code_OpenCL(configuration):
     OpenCL code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_OPENCL.replace("<%VECTOR_DATA%>", str(configuration["vector_data"]))
+    code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
     code = code.replace("<%ITEMS_PER_WORKGROUP%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
@@ -53,7 +54,7 @@ def generate_code_CUDA(configuration):
     CUDA code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_CUDA.replace("<%VECTOR_DATA%>", str(configuration["vector_data"]))
+    code = TEMPLATE_CUDA.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
     code = code.replace("<%THREADS_PER_BLOCK%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
@@ -70,7 +71,7 @@ def tune(input_size, language, constraints):
     kernel_arguments = [A, B, C]
 
     tuning_parameters = dict()
-    tuning_parameters["vector_data"] = [2**i for i in range(5)]
+    tuning_parameters["vector_size"] = [2**i for i in range(5)]
     tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"], constraints["threads_dim0_step"])]
     tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"], constraints["items_dim0_step"])]
     
