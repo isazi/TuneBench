@@ -42,7 +42,10 @@ def generate_code_OpenCL(configuration):
     OpenCL code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
+    if configuration["vector_size"] == 1:
+        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", "")
+    else:
+        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
     code = code.replace("<%ITEMS_PER_WORKGROUP%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
@@ -54,7 +57,10 @@ def generate_code_CUDA(configuration):
     CUDA code generator for the Triad benchmark.
     """
     code = str()
-    code = TEMPLATE_CUDA.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
+    if configuration["vector_size"] == 1:
+        code = TEMPLATE_CUDA.replace("<%VECTOR_SIZE%>", "")
+    else:
+        code = TEMPLATE_CUDA.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
     code = code.replace("<%THREADS_PER_BLOCK%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
 
