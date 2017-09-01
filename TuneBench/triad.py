@@ -80,9 +80,10 @@ def tune(input_size, language, constraints):
     tuning_parameters["vector_size"] = [2**i for i in range(5)]
     tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"], constraints["threads_dim0_step"])]
     tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"], constraints["items_dim0_step"])]
+    dim0_divisor = ["items_dim0"]
     
     if language == "OpenCL":
-        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, lang=language)
+        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, lang=language, grid_div_x=dim0_divisor)
     else:
         results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, lang=language)
 
