@@ -106,9 +106,9 @@ def tune(input_size, language, constraints):
     try:
         if language == "OpenCL":
             tuning_parameters["vector_size"] = [2**i for i in range(5)]
-            results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
+            results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=["threads_dim0"], restrictions=restrictions, lang=language, answer=control)
         else:
             tuning_parameters["vector_size"] = [2**i for i in range(3)]
-            results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
+            results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=["threads_dim0"], restrictions=restrictions, lang=language, answer=control)
     except Exception as error:
         print(error)
