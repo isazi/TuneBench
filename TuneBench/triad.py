@@ -14,7 +14,7 @@ TEMPLATE_OPENCL = """__kernel void triad(__global const """ + DATA_TYPE + """<%V
 unsigned int item = (get_group_id(0) * <%ITEMS_PER_WORKGROUP%>) + get_local_id(0);
 <%COMPUTE%>
 }\n"""
-TEMPLATE_CUDA = """__global__ void triad(const <%VECTOR_SIZE%> * const restrict A, const <%VECTOR_SIZE%> * const restrict B, <%VECTOR_SIZE%> * const restrict C) {
+TEMPLATE_CUDA = """__global__ void triad(const """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict A, const """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict B, """ + DATA_TYPE + """<%VECTOR_SIZE%> * const restrict C) {
 unsigned int item = (blockIdx.x * <%THREADS_PER_BLOCK%>) + threadIdx.x;
 <%COMPUTE%>
 }\n"""
