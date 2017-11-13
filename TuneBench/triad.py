@@ -28,7 +28,7 @@ def generate_compute_code(configuration):
             temp = temp.replace(" + <%OFFSET%>", "")
         else:
             temp = temp.replace("<%OFFSET%>", str(item * configuration["threads_dim0"]))
-        temp = temp.replace("<%FACTOR%>", str(FACTOR))
+        temp = temp.replace("<%FACTOR%>", str(FACTOR) + "f")
         # Format the code
         if item != (configuration["items_dim0"] - 1):
             temp = temp + "\n"
@@ -78,12 +78,12 @@ def tune(input_size, language, constraints):
 
     tuning_parameters = dict()
     tuning_parameters["vector_size"] = [2**i for i in range(5)]
-    tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"], constraints["threads_dim0_step"])]
-    tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"], constraints["items_dim0_step"])]
+    tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"] + 1, constraints["threads_dim0_step"])]
+    tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"] + 1, constraints["items_dim0_step"])]
+    dim0_divisor = ["threads_dim0 * items_dim0 * vector_size"]
+    restrictions = ["(" + str(input_size) + " % (threads_dim0 * items_dim0 * vector_size)) == 0", "(items_dim0 * vector_size) <= " + str(constraints["items_dim0_max"]) ]
     
     if language == "OpenCL":
-        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, lang=language)
+        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language)
     else:
-        results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, lang=language)
-
-    print(results)
+        results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language)
