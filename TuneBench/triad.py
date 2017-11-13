@@ -68,6 +68,12 @@ def generate_code_CUDA(configuration):
         if configuration["vector_size"] == 1:
             temp = temp.replace("<%FACTOR%>", str(FACTOR) + "f")
         else:
+            factor = "make_" + DATA_TYPE + str(configuration["vector_size"]) + "("
+            for vector in range(0, configuration["vector_size"] - 1):
+                factor = factor + str(FACTOR) + "f"
+                if vector < configuration["vector_size"] - 2:
+                    factor = factor + ", "
+            factor = factor + ")"
             temp = temp.replace("<%FACTOR%>", "make_" + DATA_TYPE + str(configuration["vector_size"]) + "(" + str(FACTOR) + "f)")
         # Format the code
         if item != (configuration["items_dim0"] - 1):
