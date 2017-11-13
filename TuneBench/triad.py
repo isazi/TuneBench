@@ -95,7 +95,7 @@ def tune(input_size, language, constraints):
     B = numpy.random.randn(input_size).astype(numpy.float32)
     C = numpy.random.randn(input_size).astype(numpy.float32)
     kernel_arguments = [A, B, C]
-    control = [None, None, A+B]
+    control = [None, None, A+(FACTOR * B)]
 
     tuning_parameters = dict()
     tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"] + 1, constraints["threads_dim0_step"])]
