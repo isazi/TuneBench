@@ -20,7 +20,17 @@ unsigned int item = (blockIdx.x * <%THREADS_PER_BLOCK%>) + threadIdx.x;
 }\n"""
 TEMPLATE_COMPUTE = """C[item + <%OFFSET%>] = A[item + <%OFFSET%>] + (<%FACTOR%> * B[item + <%OFFSET%>]);"""
 
-def generate_compute_code(configuration):
+# OpenCL code generator
+def generate_code_OpenCL(configuration):
+    """
+    OpenCL code generator for the Triad benchmark.
+    """
+    code = str()
+    if configuration["vector_size"] == 1:
+        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", "")
+    else:
+        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
+    code = code.replace("<%ITEMS_PER_WORKGROUP%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
     compute_code = str()
     for item in range(configuration["items_dim0"]):
         temp = TEMPLATE_COMPUTE
@@ -33,21 +43,7 @@ def generate_compute_code(configuration):
         if item != (configuration["items_dim0"] - 1):
             temp = temp + "\n"
         compute_code = compute_code + temp
-
-    return compute_code
-
-# OpenCL code generator
-def generate_code_OpenCL(configuration):
-    """
-    OpenCL code generator for the Triad benchmark.
-    """
-    code = str()
-    if configuration["vector_size"] == 1:
-        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", "")
-    else:
-        code = TEMPLATE_OPENCL.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
-    code = code.replace("<%ITEMS_PER_WORKGROUP%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
-    code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
+    code = code.replace("<%COMPUTE%>", compute_code)
 
     return code
 
@@ -62,7 +58,22 @@ def generate_code_CUDA(configuration):
     else:
         code = TEMPLATE_CUDA.replace("<%VECTOR_SIZE%>", str(configuration["vector_size"]))
     code = code.replace("<%THREADS_PER_BLOCK%>", str(int(configuration["threads_dim0"]) * int(configuration["items_dim0"])))
-    code = code.replace("<%COMPUTE%>", generate_compute_code(configuration))
+    compute_code = str()
+    for item in range(configuration["items_dim0"]):
+        temp = TEMPLATE_COMPUTE
+        if item == 0:
+            temp = temp.replace(" + <%OFFSET%>", "")
+        else:
+            temp = temp.replace("<%OFFSET%>", str(item * configuration["threads_dim0"]))
+        if configuration["vector_size"] == 1:
+            temp = temp.replace("<%FACTOR%>", str(FACTOR) + "f")
+        else:
+            temp = temp.replace("<%FACTOR%>", "make_" + DATA_TYPE + str(configuration["vector_size"]) + "(" + str(FACTOR) + "f)")
+        # Format the code
+        if item != (configuration["items_dim0"] - 1):
+            temp = temp + "\n"
+        compute_code = compute_code + temp
+    code = code.replace("<%COMPUTE%>", compute_code)
 
     return code
 
