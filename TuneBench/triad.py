@@ -103,9 +103,12 @@ def tune(input_size, language, constraints):
     dim0_divisor = ["threads_dim0 * items_dim0 * vector_size"]
     restrictions = ["(" + str(input_size) + " % (threads_dim0 * items_dim0 * vector_size)) == 0", "(items_dim0 * vector_size) <= " + str(constraints["items_dim0_max"]) ]
     
-    if language == "OpenCL":
-        tuning_parameters["vector_size"] = [2**i for i in range(5)]
-        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
-    else:
-        tuning_parameters["vector_size"] = [2**i for i in range(3)]
-        results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
+    try:
+        if language == "OpenCL":
+            tuning_parameters["vector_size"] = [2**i for i in range(5)]
+            results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
+        else:
+            tuning_parameters["vector_size"] = [2**i for i in range(3)]
+            results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
+    except Exception as error:
+        print(error)
