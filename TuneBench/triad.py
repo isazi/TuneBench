@@ -95,6 +95,7 @@ def tune(input_size, language, constraints):
     B = numpy.random.randn(input_size).astype(numpy.float32)
     C = numpy.random.randn(input_size).astype(numpy.float32)
     kernel_arguments = [A, B, C]
+    control = [None, None, A+B]
 
     tuning_parameters = dict()
     tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"] + 1, constraints["threads_dim0_step"])]
@@ -104,7 +105,7 @@ def tune(input_size, language, constraints):
     
     if language == "OpenCL":
         tuning_parameters["vector_size"] = [2**i for i in range(5)]
-        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language)
+        results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
     else:
         tuning_parameters["vector_size"] = [2**i for i in range(3)]
-        results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language)
+        results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, restrictions=restrictions, lang=language, answer=control)
