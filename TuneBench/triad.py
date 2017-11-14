@@ -102,13 +102,14 @@ def tune(input_size, language, constraints):
     tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"] + 1, constraints["items_dim0_step"])]
     dim0_divisor = ["threads_dim0 * items_dim0 * vector_size"]
     restrictions = ["(" + str(input_size) + " % (threads_dim0 * items_dim0 * vector_size)) == 0", "(items_dim0 * vector_size) <= " + str(constraints["items_dim0_max"]) ]
+    block_size_names=["threads_dim0", "threads_dim1", "threads_dim2"]
     
     try:
         if language == "OpenCL":
             tuning_parameters["vector_size"] = [2**i for i in range(5)]
-            results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=["threads_dim0", "threads_dim1", "threads_dim2"], restrictions=restrictions, lang=language, answer=control)
+            results = tune_kernel("triad", generate_code_OpenCL, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=language, answer=control)
         else:
             tuning_parameters["vector_size"] = [2**i for i in range(3)]
-            results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=["threads_dim0", "threads_dim1", "threads_dim2"], restrictions=restrictions, lang=language, answer=control)
+            results = tune_kernel("triad", generate_code_CUDA, input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=language, answer=control)
     except Exception as error:
         print(error)
