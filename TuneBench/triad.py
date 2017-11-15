@@ -99,6 +99,8 @@ def tune(input_size, language, constraints):
 
     tuning_parameters = dict()
     tuning_parameters["threads_dim0"] = [threads for threads in range(constraints["threads_dim0_min"], constraints["threads_dim0_max"] + 1, constraints["threads_dim0_step"])]
+    tuning_parameters["threads_dim1"] = [1]
+    tuning_parameters["threads_dim2"] = [1]
     tuning_parameters["items_dim0"] = [items for items in range(constraints["items_dim0_min"], constraints["items_dim0_max"] + 1, constraints["items_dim0_step"])]
     dim0_divisor = ["threads_dim0 * items_dim0 * vector_size"]
     restrictions = ["(" + str(input_size) + " % (threads_dim0 * items_dim0 * vector_size)) == 0", "(items_dim0 * vector_size) <= " + str(constraints["items_dim0_max"]) ]
