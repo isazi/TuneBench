@@ -115,10 +115,10 @@ class Triad:
         try:
             if self.language == "OpenCL":
                 tuning_parameters["vector_size"] = [2**i for i in range(5)]
-                results = tune_kernel("triad", self.generate_code_OpenCL, self.input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=self.language, answer=control, verify=self.verify)
+                results = tune_kernel("triad", self.generate_code_OpenCL, self.input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=self.language, answer=control, verify=self.verify, atol=1.0e-03)
             else:
                 tuning_parameters["vector_size"] = [2**i for i in range(3)]
-                results = tune_kernel("triad", self.generate_code_CUDA, self.input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=self.language, answer=control, verify=self.verify)
+                results = tune_kernel("triad", self.generate_code_CUDA, self.input_size, kernel_arguments, tuning_parameters, grid_div_x=dim0_divisor, block_size_names=block_size_names, restrictions=restrictions, lang=self.language, answer=control, verify=self.verify, atol=1.0e-03)
         except Exception as error:
             print(error)
         return results
