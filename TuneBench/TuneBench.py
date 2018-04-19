@@ -25,9 +25,9 @@ if __name__ == "__main__":
     arguments = parseCommandLine()
     if arguments.benchmark == "triad":
         constraints = dict()
-        constraints["thread_dim0_min"] = arguments.threads_dim0_min
-        constraints["thread_dim0_max"] = arguments.threads_dim0_max
-        constraints["thread_dim0_step"] = arguments.threads_dim0_step
+        constraints["threads_dim0_min"] = arguments.threads_dim0_min
+        constraints["threads_dim0_max"] = arguments.threads_dim0_max
+        constraints["threads_dim0_step"] = arguments.threads_dim0_step
         constraints["items_dim0_min"] = arguments.items_dim0_min
         constraints["items_dim0_max"] = arguments.items_dim0_max
         constraints["items_dim0_step"] = arguments.items_dim0_step
