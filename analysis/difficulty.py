@@ -16,7 +16,7 @@
 
 import statistical_analysis
 
-alpha = 0.7
+alpha = 0.5
 beta = 1.0 - alpha
 
 def difficulty(db_queue, table, benchmark, scenario, peak):
@@ -38,4 +38,8 @@ def difficulty(db_queue, table, benchmark, scenario, peak):
     total_confs = results[0][0]
     minimum = results[0][1]
     maximum = results[0][2]
-    return (alpha * last_percentile) + beta - ((beta * (maximum - minimum)) / float(peak))
+    if last_percentile >= 0.1:
+        distribution_component = (0.5 / 0.9) * last_percentile + 1.0 - (0.5 / 0.9)
+    else:
+        distribution_component = (0.5 / 0.1) * last_percentile
+    return (alpha * distribution_component) + beta - ((beta * (maximum - minimum)) / float(peak))
