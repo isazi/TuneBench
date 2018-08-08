@@ -134,5 +134,5 @@ def distribution(db_queue, table, benchmark, scenario):
         distribution.append(results[0][0])
     distribution.append(distribution.pop() + 1)
     for percentile in range(0, 10):
-        distribution[percentile] = (distribution[percentile] * 100) / total_confs
+        distribution[percentile] = distribution[percentile] / total_confs
     return distribution

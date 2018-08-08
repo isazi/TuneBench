@@ -14,9 +14,14 @@
 # limitations under the License.
 """Functions to compute the tuning difficulty score."""
 
-def difficulty(db_queue, table, benchmark, scenario):
+import statistical_analysis
+
+alpha = 0.7
+beta = 1.0 - alpha
+
+def difficulty(db_queue, table, benchmark, scenario, peak):
     """Computes the tuning difficulty for the given scenario."""
-    distribution = list()
+    last_percentile = statistical_analysis.distribution(db_queue, table, benchmark, scenario)[9]
     metrics = ""
     if benchmark.lower() == "triad":
         metrics = "GBs,"
@@ -33,12 +38,4 @@ def difficulty(db_queue, table, benchmark, scenario):
     total_confs = results[0][0]
     minimum = results[0][1]
     maximum = results[0][2]
-    percentile_range = (maximum - minimum) / 10
-    for percentile in range(1, 11):
-        db_queue.execute("SELECT COUNT(id) FROM " + table + " WHERE (" + scenario + " AND " + metrics.rstrip(",") + " >= " + str(minimum + ((percentile - 1) * percentile_range)) + " AND " + metrics.rstrip(",") + " < " + str(minimum + (percentile * percentile_range)) + ")")
-        results = db_queue.fetchall()
-        distribution.append(results[0][0])
-    distribution.append(distribution.pop() + 1)
-    for percentile in range(0, 10):
-        distribution[percentile] = (distribution[percentile] * 100) / total_confs
-    return distribution
+    return (alpha * last_percentile) + beta - ((beta * (maximum - minimum)) / float(peak))

@@ -130,11 +130,11 @@ elif COMMAND == "distribution":
     else:
         management.print_tuples(statistical_analysis.distribution(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4]))
 elif COMMAND == "difficulty_score":
-    if len(sys.argv) != 5:
-        print("Usage: \"" + sys.argv[0] + " difficulty_score <table> <benchmark> <scenario>\"")
+    if len(sys.argv) != 6:
+        print("Usage: \"" + sys.argv[0] + " difficulty_score <table> <benchmark> <scenario> <theoretical_peak>\"")
         print("Returns the difficulty score of the table, for a given scenario.")
     else:
-        management.print_tuples(difficulty.difficulty(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4]))
+        print(difficulty.difficulty(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]))
 else:
     print("Unknown command.")
     print("Type \"" + sys.argv[0]  + "\" for a list of supported commands.")
