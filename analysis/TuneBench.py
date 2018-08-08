@@ -144,4 +144,3 @@ DB_CONNECTION.commit()
 DB_CONNECTION.close()
 
 sys.exit(0)
-
