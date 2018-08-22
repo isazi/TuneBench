@@ -14,6 +14,7 @@
 # limitations under the License.
 """Functions to compute the tuning difficulty score."""
 
+import math
 import statistical_analysis
 
 alpha = 0.5
@@ -33,13 +34,13 @@ def difficulty(db_queue, table, benchmark, scenario, peak):
         metrics = "GFLOPs,"
     elif benchmark.lower() == "correlator":
         metrics = "GFLOPs,"
-    db_queue.execute("SELECT COUNT(id),MIN(" + metrics.rstrip(",") + "),MAX(" + metrics.rstrip(",") + ") FROM " + table + " WHERE " + scenario)
+    db_queue.execute("SELECT MIN(" + metrics.rstrip(",") + "),MAX(" + metrics.rstrip(",") + ") FROM " + table + " WHERE " + scenario)
     results = db_queue.fetchall()
-    total_confs = results[0][0]
-    minimum = results[0][1]
-    maximum = results[0][2]
+    minimum = results[0][0]
+    maximum = results[0][1]
     if last_percentile >= 0.1:
         distribution_component = (0.5 / 0.9) * last_percentile + 1.0 - (0.5 / 0.9)
     else:
         distribution_component = (0.5 / 0.1) * last_percentile
-    return (alpha * distribution_component) + beta - ((beta * (maximum - minimum)) / float(peak))
+    size_component = math.sqrt((maximum - minimum) / float(peak))
+    return (alpha * distribution_component) + beta - (beta * size_component)
