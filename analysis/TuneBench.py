@@ -21,10 +21,11 @@ import config
 import management
 import tuning
 import statistical_analysis
+import performance_analysis
 import difficulty
 
 if len(sys.argv) == 1:
-    print("Supported commmands are: create, delete, load, list_tables, list_values, tune, quartiles, histogram, tuning_variability, distribution, difficulty_score")
+    print("Supported commmands are: create, delete, load, list_tables, list_values, tune, quartiles, histogram, tuning_variability, distribution, performance_statistics difficulty_score")
     print("Type \"" + sys.argv[0] + " <command>\" for specific help.")
     sys.exit(1)
 
@@ -129,6 +130,12 @@ elif COMMAND == "distribution":
         print("Returns the distribution over the performance table for the table and a given scenario.")
     else:
         management.print_tuples(statistical_analysis.distribution(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4]))
+elif COMMAND == "performance_statistics":
+    if len(sys.argv) != 5:
+        print("Usage: \"" + sys.argv[0] + " performance_statistics <table> <benchmark> <scenario>\"")
+        print("Returns the performance statistics for the table and a given scenario.")
+    else:
+        performance_analysis.performance_statistics(DB_QUEUE, sys.argv[2], sys.argv[3], sys.argv[4])
 elif COMMAND == "difficulty_score":
     if len(sys.argv) != 6:
         print("Usage: \"" + sys.argv[0] + " difficulty_score <table> <benchmark> <scenario> <theoretical_peak>\"")
